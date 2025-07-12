@@ -343,18 +343,42 @@ app.delete('/api/admin/items/:id', authenticateToken, isAdmin, (req, res) => {
 
 // Create admin user (for testing)
 app.post('/api/admin/create', (req, res) => {
-  const adminUser = {
-    id: uuidv4(),
-    email: 'admin@rewear.com',
-    password: bcrypt.hashSync('admin123', 10),
-    name: 'Admin User',
-    points: 1000,
-    role: 'admin',
-    createdAt: new Date()
-  };
+  try {
+    // Check if admin already exists
+    const existingAdmin = users.find(user => user.email === 'admin@rewear.com');
+    if (existingAdmin) {
+      return res.json({ 
+        message: 'Admin user already exists',
+        credentials: {
+          email: 'admin@rewear.com',
+          password: 'admin123'
+        }
+      });
+    }
 
-  users.push(adminUser);
-  res.json({ message: 'Admin user created' });
+    const adminUser = {
+      id: uuidv4(),
+      email: 'admin@rewear.com',
+      password: bcrypt.hashSync('admin123', 10),
+      name: 'Admin User',
+      points: 1000,
+      role: 'admin',
+      createdAt: new Date()
+    };
+
+    users.push(adminUser);
+    console.log('Admin user created:', adminUser.email);
+    res.json({ 
+      message: 'Admin user created successfully',
+      credentials: {
+        email: 'admin@rewear.com',
+        password: 'admin123'
+      }
+    });
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ message: 'Error creating admin user' });
+  }
 });
 
 // Error handling middleware
@@ -367,6 +391,29 @@ app.use((error, req, res, next) => {
   res.status(500).json({ message: 'Server error' });
 });
 
+// Create default admin user on server start
+const createDefaultAdmin = () => {
+  const existingAdmin = users.find(user => user.email === 'admin@rewear.com');
+  if (!existingAdmin) {
+    const adminUser = {
+      id: uuidv4(),
+      email: 'admin@rewear.com',
+      password: bcrypt.hashSync('admin123', 10),
+      name: 'Admin User',
+      points: 1000,
+      role: 'admin',
+      createdAt: new Date()
+    };
+    users.push(adminUser);
+    console.log('✅ Default admin user created:');
+    console.log('   Email: admin@rewear.com');
+    console.log('   Password: admin123');
+  } else {
+    console.log('✅ Admin user already exists');
+  }
+};
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  createDefaultAdmin();
 }); 
