@@ -1,266 +1,145 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiArrowRight, FiArrowLeft, FiHeart, FiUsers, FiShield } from 'react-icons/fi';
-import axios from 'axios';
+import { FaTshirt, FaUsers, FaLeaf, FaRecycle, FaHandshake, FaShieldAlt, FaSmile, FaGlobe } from 'react-icons/fa';
+
+// Show only 5 floating images, spaced to fit above the buttons
+const floatingImages = [
+  { src: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=facearea&w=400&h=400', arcPos: 0.08 },
+  { src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=400&h=400', arcPos: 0.24 },
+  { src: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=400', arcPos: 0.5 },
+  { src: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=facearea&w=400&h=400', arcPos: 0.76 },
+  { src: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=400&h=400', arcPos: 0.92 },
+];
+
+// Show only 8 categories (4 per row)
+const categories = [
+  { name: 'Men', img: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Women', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Kids', img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Accessories', img: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Shoes', img: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Outerwear', img: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Sportswear', img: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=facearea&w=400&h=400' },
+  { name: 'Formal', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=400&h=400' },
+];
+
+// Advantages/Benefits
+const benefits = [
+  { icon: <FaLeaf size={36} color="#22c55e" />, title: 'Eco-Friendly', desc: 'Reduce textile waste and help the planet by reusing and recycling clothing.' },
+  { icon: <FaRecycle size={36} color="#22c55e" />, title: 'Sustainable Fashion', desc: 'Promote a circular economy and sustainable lifestyle.' },
+  { icon: <FaHandshake size={36} color="#22c55e" />, title: 'Community Driven', desc: 'Connect with like-minded people who care about conscious fashion.' },
+  { icon: <FaSmile size={36} color="#22c55e" />, title: 'Affordable', desc: 'Get great fashion at a fraction of the cost.' },
+];
+
+// Helper to get arc positions for floating images
+function getArcPosition(cx, cy, r, t) {
+  // t: 0 (left) to 1 (right)
+  const angle = Math.PI * (1 + t); // from 180deg to 360deg
+  return {
+    left: cx + r * Math.cos(angle) - 90, // 90 = half image size (180)
+    top: cy + r * Math.sin(angle) - 90,
+    rotate: `${-20 + t * 40}deg`,
+  };
+}
 
 const LandingPage = () => {
-  const [featuredItems, setFeaturedItems] = useState([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchFeaturedItems = async () => {
-      try {
-        const response = await axios.get('/api/items');
-        // Take first 6 items for featured carousel
-        setFeaturedItems(response.data.slice(0, 6));
-      } catch (error) {
-        console.error('Error fetching featured items:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeaturedItems();
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredItems.length / 3)));
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [featuredItems.length]);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % Math.max(1, Math.ceil(featuredItems.length / 3)));
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => 
-      prev === 0 ? Math.max(0, Math.ceil(featuredItems.length / 3) - 1) : prev - 1
-    );
-  };
-
-  const features = [
-    {
-      icon: <FiHeart className="w-8 h-8" />,
-      title: 'Sustainable Fashion',
-      description: 'Reduce textile waste by giving clothes a second life through community exchange.'
-    },
-    {
-      icon: <FiUsers className="w-8 h-8" />,
-      title: 'Community Driven',
-      description: 'Connect with like-minded individuals who share your passion for sustainable living.'
-    },
-    {
-      icon: <FiShield className="w-8 h-8" />,
-      title: 'Safe & Secure',
-      description: 'All items are moderated and verified to ensure quality and authenticity.'
-    }
-  ];
+  // Arc center and radius (responsive)
+  const arcWidth = 1200;
+  const arcHeight = 600;
+  const cx = arcWidth / 2;
+  const cy = arcHeight * 1.18;
+  const r = arcWidth * 0.48;
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-24 bg-gradient-to-br from-green-200 via-blue-100 to-white overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none select-none" aria-hidden="true">
-          <svg width="100%" height="100%" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 left-0">
-            <path fill="#bbf7d0" fillOpacity="0.3" d="M0,160L60,170.7C120,181,240,203,360,197.3C480,192,600,160,720,133.3C840,107,960,85,1080,101.3C1200,117,1320,171,1380,197.3L1440,224L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z" />
-          </svg>
-        </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-5xl md:text-7xl font-extrabold text-green-800 mb-6 drop-shadow-lg">
-              Sustainable Fashion
-              <span className="text-accent"> Exchange</span>
-            </h1>
-            <p className="text-2xl text-green-900 mb-10 max-w-3xl mx-auto font-medium">
-              Join our community of eco-conscious fashion lovers. Swap, share, and discover 
-              pre-loved clothing while reducing textile waste and promoting sustainable fashion.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register" className="btn btn-primary btn-lg shadow-lg text-lg">
-                Start Swapping
-                <FiArrowRight />
-              </Link>
-              <Link to="/items" className="btn btn-outline btn-lg text-lg">
-                Browse Items
-                <FiArrowRight />
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-      <div className="section-divider" />
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-green-800 mb-4">
-              Why Choose ReWear?
-            </h2>
-            <p className="text-lg text-green-700 max-w-2xl mx-auto">
-              Our platform makes sustainable fashion accessible, affordable, and enjoyable for everyone.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.15 }}
-                className="text-center p-8 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg hover:shadow-2xl transition-shadow"
-              >
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 shadow">
-                  {feature.icon}
-                </div>
-                <h3 className="text-2xl font-semibold text-green-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-green-700">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <div className="section-divider" />
-      {/* Featured Items Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-green-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-green-800 mb-4">
-              Featured Items
-            </h2>
-            <p className="text-lg text-green-700">
-              Discover amazing pieces from our community
-            </p>
-          </div>
-          {loading ? (
-            <div className="flex justify-center">
-              <div className="spinner w-8 h-8"></div>
-            </div>
-          ) : featuredItems.length > 0 ? (
-            <div className="relative">
-              <div className="overflow-hidden">
-                <div 
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ 
-                    transform: `translateX(-${currentSlide * 100}%)`,
-                    width: `${Math.ceil(featuredItems.length / 3) * 100}%`
-                  }}
-                >
-                  {Array.from({ length: Math.ceil(featuredItems.length / 3) }, (_, slideIndex) => (
-                    <div key={slideIndex} className="w-full flex gap-8">
-                      {featuredItems.slice(slideIndex * 3, (slideIndex + 1) * 3).map((item) => (
-                        <div key={item._id} className="w-1/3">
-                          <Link to={`/items/${item._id}`}>
-                            <motion.div
-                              whileHover={{ scale: 1.04, boxShadow: '0 8px 32px 0 rgba(34,197,94,0.16)' }}
-                              className="card h-full transition-transform duration-300"
-                            >
-                              <div className="aspect-square overflow-hidden rounded-t-xl">
-                                <img
-                                  src={`/uploads/${item.images[0]}`}
-                                  alt={item.title}
-                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                              </div>
-                              <div className="card-body">
-                                <h3 className="font-semibold text-green-900 mb-2">
-                                  {item.title}
-                                </h3>
-                                <p className="text-green-700 text-sm mb-2">
-                                  {item.description.substring(0, 100)}...
-                                </p>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-green-700">
-                                    {item.category} • {item.size}
-                                  </span>
-                                  <span className="badge badge-success">
-                                    Available
-                                  </span>
-                                </div>
-                              </div>
-                            </motion.div>
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Carousel Controls */}
-              <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow border border-green-100"
-              >
-                <FiArrowLeft className="w-7 h-7 text-green-600" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow border border-green-100"
-              >
-                <FiArrowRight className="w-7 h-7 text-green-600" />
-              </button>
-              {/* Dots */}
-              <div className="flex justify-center mt-8 space-x-3">
-                {Array.from({ length: Math.ceil(featuredItems.length / 3) }, (_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-4 h-4 rounded-full border-2 border-green-300 transition-colors ${
-                      index === currentSlide ? 'bg-green-500' : 'bg-white'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center text-green-700">
-              <p>No items available yet. Be the first to list an item!</p>
-            </div>
-          )}
-          <div className="text-center mt-14">
-            <Link to="/items" className="btn btn-primary btn-lg shadow-lg text-lg">
-              View All Items
-              <FiArrowRight />
-            </Link>
-          </div>
-        </div>
-      </section>
-      <div className="section-divider" />
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-green-400 to-blue-400">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
-            Ready to Start Your Sustainable Fashion Journey?
-          </h2>
-          <p className="text-2xl text-green-50 mb-8 max-w-2xl mx-auto font-medium">
-            Join thousands of users who are already making a difference by choosing 
-            sustainable fashion through community exchange.
+    <div style={{ minHeight: '100vh', background: '#18181b', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+      {/* Arc Hero Section */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: arcWidth, margin: '0 auto', marginTop: 32, minHeight: arcHeight + 40 }}>
+        {/* SVG Arc */}
+        <svg width={arcWidth} height={arcHeight} style={{ position: 'absolute', left: 0, top: 0, zIndex: 0 }}>
+          <path
+            d={`M0,${cy} A${r},${r} 0 0,1 ${arcWidth},${cy}`}
+            fill="none"
+            stroke="#22c55e44"
+            strokeWidth="22"
+          />
+        </svg>
+        {/* Floating Images on Arc (zIndex: 1) */}
+        {floatingImages.map((img, idx) => {
+          const pos = getArcPosition(cx, cy, r, img.arcPos);
+          return (
+            <img
+              key={idx}
+              src={img.src}
+              alt="clothing community"
+              style={{
+                position: 'absolute',
+                width: 180,
+                height: 180,
+                objectFit: 'cover',
+                borderRadius: 32,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                border: '4px solid #232323',
+                left: pos.left,
+                top: pos.top,
+                transform: `rotate(${pos.rotate})`,
+                zIndex: 1,
+                transition: 'transform 0.4s',
+                background: '#232323',
+              }}
+            />
+          );
+        })}
+        {/* Main Content in Arc (no background, zIndex: 2) */}
+        <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: arcHeight, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+          <h1 style={{ fontSize: '3.5rem', fontWeight: 800, letterSpacing: -2, marginBottom: '1.5rem', lineHeight: 1.1, textShadow: '0 2px 16px #18181b, 0 1px 2px #0008' }}>
+            Clothing's <br /> Social Exchange
+          </h1>
+          <p style={{ fontSize: 22, color: '#cbd5e1', maxWidth: 540, margin: '0 auto 2.5rem', textShadow: '0 2px 8px #18181b, 0 1px 2px #0006' }}>
+            Join our community of eco-conscious fashion lovers. Swap, share, and discover pre-loved clothing while reducing textile waste and promoting sustainable fashion.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register" className="btn bg-white text-green-600 hover:bg-gray-100 btn-lg shadow-md">
-              Join ReWear Today
-              <FiArrowRight />
+          <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
+            <Link to="/register" style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: 32, padding: '1rem 2.5rem', fontWeight: 700, fontSize: 22, textDecoration: 'none', boxShadow: '0 2px 16px rgba(34,197,94,0.18)', transition: 'background 0.2s, color 0.2s' }}>
+              Start Swapping
             </Link>
-            <Link to="/add-item" className="btn btn-outline border-white text-white hover:bg-white hover:text-green-600 btn-lg shadow-md">
-              List Your First Item
-              <FiArrowRight />
+            <Link to="/items" style={{ background: 'none', color: '#22c55e', border: '2px solid #22c55e', borderRadius: 32, padding: '1rem 2.5rem', fontWeight: 700, fontSize: 22, textDecoration: 'none', boxShadow: '0 2px 16px rgba(34,197,94,0.08)', transition: 'background 0.2s, color 0.2s' }}>
+              Browse
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Categories Section */}
+      <section style={{ maxWidth: 900, margin: '48px auto 0', padding: '0 24px' }}>
+        <h2 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 32, textAlign: 'center', color: '#fff' }}>Categories</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }}>
+          {categories.map((cat, idx) => (
+            <div key={cat.name} style={{ background: '#232323', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.13)', textAlign: 'center', transition: 'transform 0.2s', cursor: 'pointer' }}>
+              <img src={cat.img} alt={cat.name} style={{ width: '100%', height: 140, objectFit: 'cover' }} />
+              <div style={{ padding: '1rem 0', fontWeight: 600, fontSize: 20, color: '#22c55e', letterSpacing: 1 }}>{cat.name}</div>
+            </div>
+          ))}
+        </div>
       </section>
+
+      {/* Benefits/Advantages Section */}
+      <section style={{ maxWidth: 900, margin: '64px auto 0', padding: '0 24px' }}>
+        <h2 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 32, textAlign: 'center', color: '#fff' }}>Why Choose ReWear?</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 32 }}>
+          {benefits.map((b, idx) => (
+            <div key={b.title} style={{ background: '#232323', borderRadius: 20, padding: '2.5rem 2rem', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.13)', minHeight: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ marginBottom: 18 }}>{b.icon}</div>
+              <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 10, color: '#22c55e' }}>{b.title}</div>
+              <div style={{ color: '#cbd5e1', fontSize: 17 }}>{b.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Decorative icons (optional) */}
+      <FaTshirt style={{ position: 'absolute', left: 40, bottom: 40, fontSize: 48, color: '#22c55e88', zIndex: 0 }} />
+      <FaUsers style={{ position: 'absolute', right: 60, top: 60, fontSize: 44, color: '#22c55e66', zIndex: 0 }} />
+
+      {/* TODO: Popular Listings section goes here */}
     </div>
   );
 };
