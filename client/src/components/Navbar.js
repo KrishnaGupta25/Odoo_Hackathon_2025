@@ -1,183 +1,134 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiUser, FiLogOut, FiMenu, FiX, FiShield } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiShield, FiHome, FiGrid, FiPlus, FiAward } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      setScrolled(isScrolled);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/');
-    setIsMenuOpen(false);
   };
 
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-lg border-b">
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white/95 backdrop-blur-md shadow-xl border-b border-gray-100' 
+        : 'bg-white shadow-lg border-b border-gray-200'
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-black font-extrabold text-2xl tracking-tight">R</span>
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all duration-300 group-hover:shadow-xl">
+                <span className="text-white font-extrabold text-2xl tracking-tight">R</span>
+              </div>
+              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
             </div>
-            <span className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">ReWear</span>
+            <div className="flex flex-col">
+              <span className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
+                ReWear
+              </span>
+              <span className="text-xs text-gray-500 font-medium -mt-1">Sustainable Fashion</span>
+            </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-10">
-            <Link to="/" className="nav-link">
-              Home
+          {/* Navigation Links - Always Horizontal */}
+          <div className="flex items-center space-x-1 lg:space-x-2">
+            <Link 
+              to="/" 
+              className={`nav-link ${isActive('/') ? 'nav-link-active' : ''}`}
+            >
+              <FiHome className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
             </Link>
-            <Link to="/items" className="nav-link">
-              Browse
+            <Link 
+              to="/items" 
+              className={`nav-link ${isActive('/items') ? 'nav-link-active' : ''}`}
+            >
+              <FiGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Browse</span>
             </Link>
             {user ? (
               <>
-                <Link to="/dashboard" className="nav-link">
-                  Dashboard
+                <Link 
+                  to="/dashboard" 
+                  className={`nav-link ${isActive('/dashboard') ? 'nav-link-active' : ''}`}
+                >
+                  <FiAward className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Link>
-                <Link to="/add-item" className="nav-link">
-                  List Item
+                <Link 
+                  to="/add-item" 
+                  className={`nav-link ${isActive('/add-item') ? 'nav-link-active' : ''}`}
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">List Item</span>
                 </Link>
                 {user.role === 'admin' && (
-                  <Link to="/admin" className="nav-link flex items-center gap-1">
-                    <FiShield />
-                    Admin
+                  <Link 
+                    to="/admin" 
+                    className={`nav-link ${isActive('/admin') ? 'nav-link-active' : ''}`}
+                  >
+                    <FiShield className="w-4 h-4" />
+                    <span className="hidden sm:inline">Admin</span>
                   </Link>
                 )}
-                <div className="flex items-center space-x-4 ml-6">
-                  <div className="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full shadow-sm">
-                    <FiUser className="text-black" />
-                    <span className="text-black font-semibold">{user.name}</span>
-                    <span className="bg-gray-200 text-black px-2 py-1 rounded-full text-xs font-bold">
-                      {user.points} pts
-                    </span>
+                <div className="flex items-center space-x-2 lg:space-x-4 ml-2 lg:ml-6">
+                  <div className="flex items-center space-x-2 lg:space-x-3 bg-gradient-to-r from-gray-50 to-gray-100 px-2 lg:px-4 py-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+                    <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <FiUser className="text-white w-3 h-3 lg:w-4 lg:h-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-900 font-semibold text-xs lg:text-sm">{user.name}</span>
+                      <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-1 lg:px-2 py-0.5 rounded-full text-xs font-bold">
+                        {user.points} pts
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-1 text-gray-500 hover:text-black font-medium transition-colors"
+                    className="flex items-center space-x-1 lg:space-x-2 text-gray-500 hover:text-red-500 font-medium transition-all duration-300 hover:bg-red-50 px-2 lg:px-3 py-2 rounded-lg"
                   >
-                    <FiLogOut />
-                    <span>Logout</span>
+                    <FiLogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">Logout</span>
                   </button>
                 </div>
               </>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 lg:space-x-4">
                 <Link to="/login" className="nav-link">
-                  Login
+                  <FiUser className="w-4 h-4" />
+                  <span className="hidden sm:inline">Login</span>
                 </Link>
-                <Link to="/register" className="btn btn-primary shadow-md">
-                  Sign Up
+                <Link to="/register" className="btn btn-primary shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                  <span className="sm:hidden">Sign Up</span>
                 </Link>
               </div>
             )}
           </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-black transition-colors focus:outline-none"
-            >
-              {isMenuOpen ? <FiX size={32} /> : <FiMenu size={32} />}
-            </button>
-          </div>
         </div>
-        {/* Underline */}
-        <div className="h-1 w-full bg-gray-200 rounded-full opacity-70 mt-[-8px] mb-2 shadow-sm" />
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden py-6 border-t bg-white rounded-b-xl shadow-lg animate-fadeIn">
-            <div className="flex flex-col space-y-4">
-              <Link 
-                to="/" 
-                className="nav-link"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/items" 
-                className="nav-link"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Browse
-              </Link>
-              {user ? (
-                <>
-                  <Link 
-                    to="/dashboard" 
-                    className="nav-link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link 
-                    to="/add-item" 
-                    className="nav-link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    List Item
-                  </Link>
-                  {user.role === 'admin' && (
-                    <Link 
-                      to="/admin" 
-                      className="nav-link flex items-center gap-1"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <FiShield />
-                      Admin
-                    </Link>
-                  )}
-                  <div className="pt-4 border-t">
-                    <div className="flex items-center justify-between mb-2 bg-gray-100 px-3 py-2 rounded-full shadow-sm">
-                      <span className="text-black font-semibold">{user.name}</span>
-                      <span className="bg-gray-200 text-black px-2 py-1 rounded-full text-xs font-bold">
-                        {user.points} pts
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-2 text-gray-500 hover:text-black font-medium transition-colors w-full"
-                    >
-                      <FiLogOut />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col space-y-2">
-                  <Link 
-                    to="/login" 
-                    className="nav-link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link 
-                    to="/register" 
-                    className="btn btn-primary text-center shadow-md"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );
 };
 
-// Add nav-link utility
-// In index.css, add:
-// .nav-link { color: #64748b; font-weight: 500; font-size: 1.1rem; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: background 0.18s, color 0.18s; }
-// .nav-link:hover, .nav-link.active { color: var(--accent); background: #f0fdf4; }
-//
 export default Navbar; 

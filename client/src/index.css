@@ -200,6 +200,53 @@ code {
   }
 }
 
+/* Navbar styles */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0.75rem;
+  z-index: -1;
+}
+
+.nav-link:hover::before,
+.nav-link-active::before {
+  opacity: 0.1;
+}
+
+.nav-link:hover,
+.nav-link-active {
+  color: #1e40af;
+  transform: translateY(-1px);
+}
+
+.nav-link:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+
+
 /* Utility classes */
 .container {
   max-width: 1200px;
