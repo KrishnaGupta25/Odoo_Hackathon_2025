@@ -3,14 +3,20 @@ import { motion } from 'framer-motion';
 import { FiCheck, FiX, FiTrash2, FiRefreshCw, FiEye, FiShield } from 'react-icons/fi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminPanel = () => {
+  const { user } = useAuth();
   const [pendingItems, setPendingItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [adminRevenue, setAdminRevenue] = useState(null);
 
   useEffect(() => {
     fetchPendingItems();
+    fetchAllItems();
+    fetchAdminRevenue();
   }, []);
 
   const fetchPendingItems = async () => {
@@ -25,14 +31,31 @@ const AdminPanel = () => {
     }
   };
 
+  const fetchAllItems = async () => {
+    try {
+      const response = await axios.get('/api/items');
+      setAllItems(response.data);
+    } catch (error) {
+      console.error('Error fetching all items:', error);
+    }
+  };
+
+  const fetchAdminRevenue = async () => {
+    try {
+      const response = await axios.get('/api/user/profile');
+      setAdminRevenue(response.data.points);
+    } catch (error) {
+      setAdminRevenue(null);
+    }
+  };
+
   const handleStatusUpdate = async (itemId, status) => {
     setActionLoading(prev => ({ ...prev, [itemId]: true }));
-    
     try {
       await axios.put(`/api/admin/items/${itemId}/status`, { status });
-      
       toast.success(`Item ${status} successfully`);
-      setPendingItems(prev => prev.filter(item => item.id !== itemId));
+      await fetchPendingItems();
+      await fetchAllItems();
     } catch (error) {
       console.error('Error updating item status:', error);
       toast.error('Failed to update item status');
@@ -45,14 +68,12 @@ const AdminPanel = () => {
     if (!window.confirm('Are you sure you want to remove this item? This action cannot be undone.')) {
       return;
     }
-
     setActionLoading(prev => ({ ...prev, [itemId]: true }));
-    
     try {
       await axios.delete(`/api/admin/items/${itemId}`);
-      
       toast.success('Item removed successfully');
-      setPendingItems(prev => prev.filter(item => item.id !== itemId));
+      await fetchPendingItems();
+      await fetchAllItems();
     } catch (error) {
       console.error('Error removing item:', error);
       toast.error('Failed to remove item');
@@ -69,6 +90,15 @@ const AdminPanel = () => {
     };
     return badges[status] || 'badge-info';
   };
+
+  // Calculate today's date string
+  const today = new Date().toLocaleDateString();
+  const approvedToday = allItems.filter(
+    item => item.status === 'approved' && new Date(item.updatedAt).toLocaleDateString() === today
+  ).length;
+  const rejectedToday = allItems.filter(
+    item => item.status === 'rejected' && new Date(item.updatedAt).toLocaleDateString() === today
+  ).length;
 
   if (loading) {
     return (
@@ -97,6 +127,11 @@ const AdminPanel = () => {
             <p className="text-gray-600">
               Moderate and manage item listings from the community
             </p>
+            {adminRevenue !== null && (
+              <div className="mt-4">
+                <span className="text-lg font-semibold text-green-700">Admin Revenue: {adminRevenue} pts</span>
+              </div>
+            )}
           </div>
 
           {/* Stats */}
@@ -112,7 +147,7 @@ const AdminPanel = () => {
             <div className="card">
               <div className="card-body text-center">
                 <div className="text-2xl font-bold text-green-600 mb-1">
-                  {pendingItems.filter(item => item.status === 'approved').length}
+                  {approvedToday}
                 </div>
                 <div className="text-sm text-gray-600">Approved Today</div>
               </div>
@@ -120,7 +155,7 @@ const AdminPanel = () => {
             <div className="card">
               <div className="card-body text-center">
                 <div className="text-2xl font-bold text-red-600 mb-1">
-                  {pendingItems.filter(item => item.status === 'rejected').length}
+                  {rejectedToday}
                 </div>
                 <div className="text-sm text-gray-600">Rejected Today</div>
               </div>
@@ -154,7 +189,7 @@ const AdminPanel = () => {
                 <div className="space-y-6">
                   {pendingItems.map((item) => (
                     <motion.div
-                      key={item.id}
+                      key={item._id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="border rounded-lg p-6"
@@ -227,11 +262,11 @@ const AdminPanel = () => {
                             
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => handleStatusUpdate(item.id, 'approved')}
-                                disabled={actionLoading[item.id]}
+                                onClick={() => handleStatusUpdate(item._id, 'approved')}
+                                disabled={actionLoading[item._id]}
                                 className="btn btn-sm btn-success"
                               >
-                                {actionLoading[item.id] ? (
+                                {actionLoading[item._id] ? (
                                   <div className="spinner w-4 h-4"></div>
                                 ) : (
                                   <>
@@ -242,11 +277,11 @@ const AdminPanel = () => {
                               </button>
                               
                               <button
-                                onClick={() => handleStatusUpdate(item.id, 'rejected')}
-                                disabled={actionLoading[item.id]}
+                                onClick={() => handleStatusUpdate(item._id, 'rejected')}
+                                disabled={actionLoading[item._id]}
                                 className="btn btn-sm btn-danger"
                               >
-                                {actionLoading[item.id] ? (
+                                {actionLoading[item._id] ? (
                                   <div className="spinner w-4 h-4"></div>
                                 ) : (
                                   <>
@@ -257,11 +292,11 @@ const AdminPanel = () => {
                               </button>
                               
                               <button
-                                onClick={() => handleRemoveItem(item.id)}
-                                disabled={actionLoading[item.id]}
+                                onClick={() => handleRemoveItem(item._id)}
+                                disabled={actionLoading[item._id]}
                                 className="btn btn-sm btn-outline"
                               >
-                                {actionLoading[item.id] ? (
+                                {actionLoading[item._id] ? (
                                   <div className="spinner w-4 h-4"></div>
                                 ) : (
                                   <>

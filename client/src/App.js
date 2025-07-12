@@ -10,6 +10,7 @@ import ItemDetail from './pages/ItemDetail';
 import AddItem from './pages/AddItem';
 import AdminPanel from './pages/AdminPanel';
 import LoadingSpinner from './components/LoadingSpinner';
+import Items from './pages/Items';
 
 // Protected Route component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -60,6 +61,7 @@ function App() {
             } 
           />
           <Route path="/items/:id" element={<ItemDetail />} />
+          <Route path="/items" element={<Items />} />
           <Route 
             path="/add-item" 
             element={

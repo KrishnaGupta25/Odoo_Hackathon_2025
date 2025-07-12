@@ -225,7 +225,7 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-medium text-gray-900">
-                              Swap Request #{swap.id.slice(0, 8)}
+                              Swap Request #{swap.id ? swap.id.slice(0, 8) : 'N/A'}
                             </p>
                             <p className="text-sm text-gray-500">
                               {swap.swapType === 'points' ? 'Points Redemption' : 'Direct Swap'}
